@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security config:
+  - Allows cleartext (HTTP) for local development (10.0.2.2 = emulator localhost)
+  - HTTPS enforced in production
+  - ngrok domains allowed for physical device testing
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false"/>
+
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android emulator localhost -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Physical device on same LAN -->
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+
+    <!-- ngrok HTTPS tunnels for physical device testing -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">ngrok.io</domain>
+        <domain includeSubdomains="true">ngrok-free.app</domain>
+    </domain-config>
+
+    <!-- Midtrans Sandbox -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">sandbox.midtrans.com</domain>
+        <domain includeSubdomains="true">app.sandbox.midtrans.com</domain>
+    </domain-config>
+</network-security-config>
