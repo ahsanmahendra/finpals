@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/api_constants.dart';
+import '../../core/network/dio_client.dart';
 import '../../providers/providers.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/common/common_widgets.dart';
@@ -17,8 +19,7 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
       _AddTransactionScreenState();
 }
 
-class _AddTransactionScreenState
-    extends ConsumerState<AddTransactionScreen> {
+class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _merchantCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
@@ -30,15 +31,11 @@ class _AddTransactionScreenState
   @override
   void initState() {
     super.initState();
-    // Pre-fill date to today
     _dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    // Pre-fill from OCR/extra if provided
     if (widget.prefill != null) {
       final p = widget.prefill!;
       _merchantCtrl.text = p['merchant'] as String? ?? '';
-      _amountCtrl.text =
-          (p['amount'] as num?)?.toStringAsFixed(0) ?? '';
+      _amountCtrl.text = (p['amount'] as num?)?.toStringAsFixed(0) ?? '';
       _dateCtrl.text = p['date'] as String? ?? _dateCtrl.text;
       _categoryId = p['category_id'] as int?;
       _categoryName = p['category_name'] as String?;
@@ -74,15 +71,11 @@ class _AddTransactionScreenState
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
             children: [
-              // Amount — big input at top
               _AmountInput(controller: _amountCtrl)
                   .animate()
                   .fadeIn(duration: 350.ms)
                   .slideY(begin: 0.2),
-
               const SizedBox(height: 20),
-
-              // Merchant
               _FormCard(
                 children: [
                   FinpalsTextField(
@@ -118,62 +111,82 @@ class _AddTransactionScreenState
                   ),
                 ],
               ).animate().slideY(begin: 0.2, delay: 80.ms, duration: 350.ms),
-
               const SizedBox(height: 16),
-
-              // Category
               _FormCard(
                 title: 'Kategori',
                 children: [
                   categoriesAsync.when(
                     loading: () => const ShimmerBox(height: 100),
-                    error: (_, __) =>
-                        const Text('Gagal memuat kategori'),
+                    error: (_, __) => const Text('Gagal memuat kategori'),
                     data: (cats) => Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: cats.map((cat) {
-                        final isSelected =
-                            cat.categoryId == _categoryId;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _categoryId = cat.categoryId;
-                            _categoryName = cat.name;
-                          }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
+                      children: [
+                        ...cats.map((cat) {
+                          final isSelected = cat.categoryId == _categoryId;
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              _categoryId = cat.categoryId;
+                              _categoryName = cat.name;
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.emerald500
+                                    : AppColors.gray100,
+                                borderRadius: BorderRadius.circular(20),
+                                border: isSelected
+                                    ? null
+                                    : Border.all(color: AppColors.gray200),
+                              ),
+                              child: Text(
+                                cat.name,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.gray600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        // Tombol tambah kategori
+                        GestureDetector(
+                          onTap: _showAddCategoryDialog,
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 9),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.emerald500
-                                  : AppColors.gray100,
+                              color: AppColors.emerald50,
                               borderRadius: BorderRadius.circular(20),
-                              border: isSelected
-                                  ? null
-                                  : Border.all(
-                                      color: AppColors.gray200),
+                              border: Border.all(color: AppColors.emerald300),
                             ),
-                            child: Text(
-                              cat.name,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.gray600,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_rounded,
+                                    size: 14, color: AppColors.emerald600),
+                                SizedBox(width: 4),
+                                Text('Tambah',
+                                    style: TextStyle(
+                                        color: AppColors.emerald600,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13)),
+                              ],
                             ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ).animate().slideY(begin: 0.2, delay: 150.ms, duration: 350.ms),
-
               const SizedBox(height: 28),
-
               FinpalsButton(
                 label: 'Simpan Transaksi',
                 isLoading: txState.isLoading,
@@ -187,6 +200,68 @@ class _AddTransactionScreenState
     );
   }
 
+  Future<void> _showAddCategoryDialog() async {
+    final nameCtrl = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Tambah Kategori',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: TextField(
+          controller: nameCtrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Nama kategori...',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child:
+                const Text('Batal', style: TextStyle(color: AppColors.gray500)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.emerald500,
+              minimumSize: const Size(80, 40),
+            ),
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              try {
+                final dio = ref.read(dioProvider);
+                final response = await dio.post(
+                  ApiConstants.categories,
+                  data: {'name': nameCtrl.text.trim()},
+                );
+                ref.invalidate(categoriesProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+                setState(() {
+                  _categoryId = response.data['data']['category_id'] as int;
+                  _categoryName = nameCtrl.text.trim();
+                });
+                if (mounted) {
+                  FinpalsSnackbar.show(
+                      context, 'Kategori berhasil ditambahkan!',
+                      isSuccess: true);
+                }
+              } catch (e) {
+                if (mounted) {
+                  FinpalsSnackbar.show(context, 'Gagal menambahkan kategori',
+                      isError: true);
+                }
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    nameCtrl.dispose();
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -196,8 +271,7 @@ class _AddTransactionScreenState
       lastDate: now,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
-              primary: AppColors.emerald500),
+          colorScheme: const ColorScheme.light(primary: AppColors.emerald500),
         ),
         child: child!,
       ),
@@ -218,9 +292,7 @@ class _AddTransactionScreenState
     }
     FocusScope.of(context).unfocus();
 
-    final ok = await ref
-        .read(transactionListProvider.notifier)
-        .addTransaction({
+    final ok = await ref.read(transactionListProvider.notifier).addTransaction({
       'merchant_name': _merchantCtrl.text.trim(),
       'amount': amount,
       'category_id': _categoryId,
@@ -278,8 +350,8 @@ class _AmountInputState extends State<_AmountInput> {
         children: [
           Text(
             'Jumlah Pengeluaran',
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.85), fontSize: 14),
+            style:
+                TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
           ),
           const SizedBox(height: 12),
           Row(
@@ -320,10 +392,10 @@ class _AmountInputState extends State<_AmountInput> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
-                    final raw =
-                        v.replaceAll('.', '').replaceAll(',', '');
+                    final raw = v.replaceAll('.', '').replaceAll(',', '');
                     final n = double.tryParse(raw);
-                    if (n == null || n <= 0) return 'Masukkan jumlah yang valid';
+                    if (n == null || n <= 0)
+                      return 'Masukkan jumlah yang valid';
                     return null;
                   },
                 ),

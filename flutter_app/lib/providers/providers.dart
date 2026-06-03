@@ -70,12 +70,10 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
         .toList();
 
     return DashboardState(
-      totalMonthly: double.tryParse(
-              summary['totalMonthly']?.toString() ?? '0') ??
-          0,
-      totalWeekly: double.tryParse(
-              summary['totalWeekly']?.toString() ?? '0') ??
-          0,
+      totalMonthly:
+          double.tryParse(summary['totalMonthly']?.toString() ?? '0') ?? 0,
+      totalWeekly:
+          double.tryParse(summary['totalWeekly']?.toString() ?? '0') ?? 0,
       categoryBreakdown: catList,
       recentTransactions: recent,
       latestInsight: insights.isNotEmpty ? insights.first : null,
@@ -175,7 +173,9 @@ class TransactionListNotifier extends StateNotifier<TransactionListState> {
   Future<void> fetch({bool reset = true}) async {
     if (reset) {
       state = state.copyWith(
-          isLoading: true, transactions: [], filter: state.filter.copyWith(page: 1));
+          isLoading: true,
+          transactions: [],
+          filter: state.filter.copyWith(page: 1));
     } else {
       state = state.copyWith(isLoadingMore: true);
     }
@@ -190,14 +190,14 @@ class TransactionListNotifier extends StateNotifier<TransactionListState> {
         search: f.search,
       );
 
-      final merged =
-          reset ? data : [...state.transactions, ...data];
+      final merged = reset ? data : [...state.transactions, ...data];
       state = state.copyWith(
         transactions: merged,
         isLoading: false,
         isLoadingMore: false,
         hasMore: data.length >= 20,
-        filter: state.filter.copyWith(page: (reset ? 1 : state.filter.page) + 1),
+        filter:
+            state.filter.copyWith(page: (reset ? 1 : state.filter.page) + 1),
         clearError: true,
       );
     } catch (e) {
@@ -307,16 +307,16 @@ class OcrNotifier extends StateNotifier<OcrState> {
   }
 }
 
-final ocrProvider =
-    StateNotifierProvider<OcrNotifier, OcrState>((ref) {
+final ocrProvider = StateNotifierProvider<OcrNotifier, OcrState>((ref) {
   return OcrNotifier(ref.read(ocrServiceProvider));
 });
 
 // ════════════════════════════════════════
 // AI INSIGHTS PROVIDER
 // ════════════════════════════════════════
-final aiInsightsProvider = FutureProvider<List<AiInsight>>((ref) async {
-  return ref.read(aiServiceProvider).getInsights();
+final aiInsightsProvider =
+    FutureProvider.autoDispose<List<AiInsight>>((ref) async {
+  return ref.watch(aiServiceProvider).getInsights();
 });
 
 // ════════════════════════════════════════

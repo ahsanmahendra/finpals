@@ -117,6 +117,35 @@ exports.getCategories = async (req, res) => {
   }
 };
 
+exports.createCategory = async (req, res) => {
+  const { name, icon, color } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nama kategori wajib diisi' });
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO categories (name, icon, color, is_default) VALUES (?, ?, ?, FALSE)',
+      [name.trim(), icon || 'more_horiz', color || '#6b7280']
+    );
+    const [[cat]] = await pool.query(
+      'SELECT * FROM categories WHERE category_id = ?', [result.insertId]
+    );
+    res.status(201).json({ data: cat });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal membuat kategori' });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  try {
+    await pool.query(
+      'DELETE FROM categories WHERE category_id = ? AND is_default = FALSE',
+      [req.params.id]
+    );
+    res.json({ message: 'Kategori dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal menghapus kategori' });
+  }
+};
+
 // ════════════════════════════════════════
 // BUDGET CONTROLLER
 // ════════════════════════════════════════

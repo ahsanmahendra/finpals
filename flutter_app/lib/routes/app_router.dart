@@ -12,6 +12,7 @@ import '../screens/scan/scan_screen.dart';
 import '../screens/scan/ocr_review_screen.dart';
 import '../screens/budget/budget_screen.dart';
 import '../screens/ai/insight_screen.dart';
+import '../screens/ai/chat_screen.dart';
 import '../screens/payment/subscription_screen.dart';
 import '../screens/payment/payment_webview_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -31,8 +32,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final path = state.matchedLocation;
 
       final publicPaths = [
-        '/splash', '/login', '/register',
-        '/forgot-password', '/otp',
+        '/splash',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/otp',
       ];
       final isPublic = publicPaths.any((p) => path.startsWith(p));
 
@@ -90,8 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/scan',
-            pageBuilder: (_, state) =>
-                _slidePage(state, const ScanScreen()),
+            pageBuilder: (_, state) => _slidePage(state, const ScanScreen()),
           ),
           GoRoute(
             path: '/ocr-review',
@@ -102,13 +105,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/budget',
-            pageBuilder: (_, state) =>
-                _slidePage(state, const BudgetScreen()),
+            pageBuilder: (_, state) => _slidePage(state, const BudgetScreen()),
           ),
           GoRoute(
             path: '/insights',
-            pageBuilder: (_, state) =>
-                _slidePage(state, const InsightScreen()),
+            pageBuilder: (_, state) => _slidePage(state, const InsightScreen()),
+          ),
+          GoRoute(
+            path: '/chat',
+            pageBuilder: (_, state) => _slidePage(state, const ChatScreen()),
           ),
           GoRoute(
             path: '/subscription',
@@ -130,8 +135,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/profile',
-            pageBuilder: (_, state) =>
-                _slidePage(state, const ProfileScreen()),
+            pageBuilder: (_, state) => _slidePage(state, const ProfileScreen()),
           ),
         ],
       ),

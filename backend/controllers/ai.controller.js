@@ -5,25 +5,8 @@ const aiService = require('../services/ai.service');
 exports.getInsights = async (req, res) => {
   const userId = req.user.userId;
   try {
-    // Return latest 10 insights
-    const [rows] = await pool.query(
-      `SELECT * FROM ai_insights
-       WHERE user_id = ?
-       ORDER BY generated_at DESC LIMIT 10`,
-      [userId]
-    );
-
-    // If no insights yet, generate them on-the-fly
-    if (!rows.length) {
-      try {
-        const newInsights = await aiService.generateInsightsForUser(userId);
-        return res.json({ data: newInsights });
-      } catch (_) {
-        return res.json({ data: [] });
-      }
-    }
-
-    res.json({ data: rows });
+    const newInsights = await aiService.generateInsightsForUser(userId);
+    res.json({ data: newInsights });
   } catch (err) {
     console.error('getInsights:', err);
     res.status(500).json({ error: 'Gagal mengambil insight' });

@@ -124,11 +124,9 @@ class DashboardScreen extends ConsumerWidget {
 
                 // ── Transaction list ───────────
                 state.recentTransactions.isEmpty
-                    ? SliverToBoxAdapter(
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: _emptyTransactions(context),
-                        ),
+                    ? SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _emptyTransactions(context),
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
@@ -147,7 +145,7 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                const SliverToBoxAdapter(child: SizedBox(height: 300)),
               ],
             ),
           ),
@@ -164,8 +162,8 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildSkeleton() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -386,7 +384,7 @@ class _QuickActions extends StatelessWidget {
     _Action(Icons.add_circle_outline_rounded, 'Tambah', '/transactions/add'),
     _Action(Icons.document_scanner_outlined, 'Scan Struk', '/scan'),
     _Action(Icons.pie_chart_outline_rounded, 'Budget', '/budget'),
-    _Action(Icons.auto_awesome_outlined, 'Insight AI', '/insights'),
+    _Action(Icons.auto_awesome_outlined, 'Chat AI', '/Chat'),
   ];
 
   @override

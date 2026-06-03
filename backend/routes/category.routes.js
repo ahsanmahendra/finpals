@@ -3,6 +3,8 @@ const auth   = require('../middleware/auth.middleware');
 const misc   = require('../controllers/misc.controller');
 
 router.use(auth);
-router.get('/', misc.getCategories);
+router.get('/',    misc.getCategories);
+router.post('/',   misc.createCategory);
+router.delete('/:id', misc.deleteCategory);
 
 module.exports = router;
