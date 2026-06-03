@@ -104,6 +104,7 @@ class TransactionModel {
   final int? categoryId;
   final String? categoryName;
   final String? categoryColor;
+  final String? categoryIcon;
   final DateTime date;
   final String? notes;
   final String source;
@@ -118,6 +119,7 @@ class TransactionModel {
     this.categoryId,
     this.categoryName,
     this.categoryColor,
+    this.categoryIcon,
     required this.date,
     this.notes,
     required this.source,
@@ -134,6 +136,7 @@ class TransactionModel {
         categoryId: json['category_id'] as int?,
         categoryName: json['category_name'] as String?,
         categoryColor: json['category_color'] as String?,
+        categoryIcon: json['category_icon'] as String?,
         date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
         notes: json['notes'] as String?,
         source: json['source'] as String? ?? 'manual',
@@ -150,6 +153,7 @@ class TransactionModel {
         'notes': notes,
         'source': source,
         'image_url': imageUrl,
+        'category_icon': categoryIcon,
       };
 
   TransactionModel copyWith({
@@ -157,6 +161,7 @@ class TransactionModel {
     double? amount,
     int? categoryId,
     String? categoryName,
+    String? categoryIcon,
     DateTime? date,
     String? notes,
     String? imageUrl,
@@ -169,6 +174,7 @@ class TransactionModel {
         categoryId: categoryId ?? this.categoryId,
         categoryName: categoryName ?? this.categoryName,
         categoryColor: categoryColor,
+        categoryIcon: categoryIcon ?? this.categoryIcon,
         date: date ?? this.date,
         notes: notes ?? this.notes,
         source: source,

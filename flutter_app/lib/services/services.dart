@@ -221,6 +221,26 @@ class UserService {
     }
   }
 
+  Future<CategoryModel> createCategory({
+    required String name,
+    required String icon,
+    required String color,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.categories,
+        data: {
+          'name': name,
+          'icon': icon,
+          'color': color,
+        },
+      );
+      return CategoryModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<List<NotificationModel>> getNotifications() async {
     try {
       final response = await _dio.get(ApiConstants.notifications);

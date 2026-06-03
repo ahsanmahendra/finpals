@@ -339,6 +339,35 @@ class _Chip extends StatelessWidget {
   }
 }
 
+IconData getCategoryIcon(String? iconName, String? categoryName) {
+  if (iconName != null) {
+    switch (iconName.toLowerCase()) {
+      case 'restaurant': return Icons.restaurant_rounded;
+      case 'shopping_bag': return Icons.shopping_bag_rounded;
+      case 'directions_car': return Icons.directions_car_rounded;
+      case 'celebration': return Icons.celebration_rounded;
+      case 'favorite': return Icons.favorite_rounded;
+      case 'school': return Icons.school_rounded;
+      case 'receipt_long': return Icons.receipt_long_rounded;
+      case 'coffee': return Icons.coffee_rounded;
+      case 'home': return Icons.home_rounded;
+      case 'sports_esports': return Icons.sports_esports_rounded;
+      case 'more_horiz': return Icons.more_horiz_rounded;
+      case 'category': return Icons.category_rounded;
+    }
+  }
+  switch (categoryName?.toLowerCase()) {
+    case 'makanan':   return Icons.restaurant_rounded;
+    case 'belanja':   return Icons.shopping_bag_rounded;
+    case 'transport': return Icons.directions_car_rounded;
+    case 'hiburan':   return Icons.celebration_rounded;
+    case 'kesehatan': return Icons.favorite_rounded;
+    case 'pendidikan': return Icons.school_rounded;
+    case 'tagihan':   return Icons.receipt_long_rounded;
+    default:          return Icons.receipt_outlined;
+  }
+}
+
 // ─── Transaction Card ──────────────────────
 class _TxCard extends StatelessWidget {
   final TransactionModel tx;
@@ -356,16 +385,7 @@ class _TxCard extends StatelessWidget {
     return AppColors.emerald500;
   }
 
-  IconData get _icon {
-    switch (tx.categoryName?.toLowerCase()) {
-      case 'makanan':   return Icons.restaurant_rounded;
-      case 'belanja':   return Icons.shopping_bag_rounded;
-      case 'transport': return Icons.directions_car_rounded;
-      case 'hiburan':   return Icons.celebration_rounded;
-      case 'kesehatan': return Icons.favorite_rounded;
-      default:          return Icons.receipt_outlined;
-    }
-  }
+  IconData get _icon => getCategoryIcon(tx.categoryIcon, tx.categoryName);
 
   @override
   Widget build(BuildContext context) {

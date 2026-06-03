@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../providers/providers.dart';
 import '../../themes/app_theme.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../services/services.dart';
 
 // ════════════════════════════════════════
 // SCAN SCREEN — mirrors React ScanView
@@ -365,6 +366,33 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
   int? _selectedCategoryId;
   String? _selectedCategoryName;
 
+  bool _isCreatingCategory = false;
+  bool _isCategoryFormExpanded = false;
+  late TextEditingController _newCatNameCtrl;
+  String _selectedNewCatIcon = 'coffee';
+  String _selectedNewCatColor = '#10B981';
+
+  final List<Map<String, dynamic>> _iconOptions = [
+    {'name': 'coffee', 'icon': Icons.coffee_rounded},
+    {'name': 'home', 'icon': Icons.home_rounded},
+    {'name': 'sports_esports', 'icon': Icons.sports_esports_rounded},
+    {'name': 'school', 'icon': Icons.school_rounded},
+    {'name': 'shopping_bag', 'icon': Icons.shopping_bag_rounded},
+    {'name': 'restaurant', 'icon': Icons.restaurant_rounded},
+    {'name': 'favorite', 'icon': Icons.favorite_rounded},
+    {'name': 'more_horiz', 'icon': Icons.more_horiz_rounded},
+  ];
+
+  final List<String> _colorOptions = [
+    '#10B981', // Emerald
+    '#2DD4BF', // Teal
+    '#60A5FA', // Blue
+    '#A78BFA', // Purple
+    '#FB7185', // Rose/Red
+    '#FBBF24', // Amber/Yellow
+    '#FB923C', // Orange
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -374,6 +402,7 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
         text: (d['total'] as num?)?.toStringAsFixed(0) ?? '');
     _dateCtrl = TextEditingController(text: d['date'] as String? ?? '');
     _notesCtrl = TextEditingController();
+    _newCatNameCtrl = TextEditingController();
     _selectedCategoryId = d['suggestedCategoryId'] as int?;
     _selectedCategoryName = d['suggestedCategory'] as String?;
   }
@@ -384,7 +413,47 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
     _totalCtrl.dispose();
     _dateCtrl.dispose();
     _notesCtrl.dispose();
+    _newCatNameCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleCreateCategory() async {
+    final name = _newCatNameCtrl.text.trim();
+    if (name.isEmpty) {
+      FinpalsSnackbar.show(context, 'Nama kategori tidak boleh kosong', isError: true);
+      return;
+    }
+    setState(() => _isCreatingCategory = true);
+    try {
+      final userService = ref.read(userServiceProvider);
+      final newCat = await userService.createCategory(
+        name: name,
+        icon: _selectedNewCatIcon,
+        color: _selectedNewCatColor,
+      );
+      
+      ref.invalidate(categoriesProvider);
+      await ref.read(categoriesProvider.future);
+      
+      setState(() {
+        _selectedCategoryId = newCat.categoryId;
+        _selectedCategoryName = newCat.name;
+        _isCategoryFormExpanded = false;
+        _newCatNameCtrl.clear();
+      });
+      
+      if (mounted) {
+        FinpalsSnackbar.show(context, 'Kategori "${newCat.name}" berhasil dibuat!', isSuccess: true);
+      }
+    } catch (e) {
+      if (mounted) {
+        FinpalsSnackbar.show(context, 'Gagal membuat kategori: $e', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCreatingCategory = false);
+      }
+    }
   }
 
   @override
@@ -483,46 +552,236 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
               // Category picker
               _buildSection(
                 title: 'Kategori',
-                child: categoriesAsync.when(
-                  loading: () =>
-                      const ShimmerBox(height: 44, borderRadius: 12),
-                  error: (_, __) =>
-                      const Text('Gagal memuat kategori'),
-                  data: (cats) => Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: cats.map((cat) {
-                      final isSelected =
-                          cat.categoryId == _selectedCategoryId;
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          _selectedCategoryId = cat.categoryId;
-                          _selectedCategoryName = cat.name;
-                        }),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.emerald500
-                                : AppColors.gray100,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            cat.name,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.gray600,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    categoriesAsync.when(
+                      loading: () =>
+                          const ShimmerBox(height: 44, borderRadius: 12),
+                      error: (_, __) =>
+                          const Text('Gagal memuat kategori'),
+                      data: (cats) => Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: cats.map((cat) {
+                          final isSelected =
+                              cat.categoryId == _selectedCategoryId;
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedCategoryId = cat.categoryId;
+                              _selectedCategoryName = cat.name;
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.emerald500
+                                    : AppColors.gray100,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                cat.name,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.gray600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    if (!_isCategoryFormExpanded) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => setState(() => _isCategoryFormExpanded = true),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Buat Kategori Baru'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.emerald600,
+                            padding: EdgeInsets.zero,
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    ] else ...[
+                      Container(
+                        margin: const EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.gray50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.gray200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Tambah Kategori Baru',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppColors.gray800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Kategori belum ada? Buat baru di sini untuk langsung dipakai di transaksi ini.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.gray500,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            FinpalsTextField(
+                              controller: _newCatNameCtrl,
+                              label: 'Nama Kategori',
+                              hint: 'Masukkan nama kategori baru (contoh: Kopi, Kos, Hobi)',
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // Icon selector
+                            const Text(
+                              'Pilih Ikon',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.gray700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            SizedBox(
+                              height: 40,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: _iconOptions.map((opt) {
+                                  final isSel = _selectedNewCatIcon == opt['name'];
+                                  final color = Color(int.parse(_selectedNewCatColor.replaceFirst('#', '0xFF')));
+                                  return GestureDetector(
+                                    onTap: () => setState(() => _selectedNewCatIcon = opt['name']),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSel ? color.withOpacity(0.15) : Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSel ? color : AppColors.gray200,
+                                          width: isSel ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        opt['icon'] as IconData,
+                                        color: isSel ? color : AppColors.gray500,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // Color selector
+                            const Text(
+                              'Pilih Warna Tema',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.gray700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: _colorOptions.map((hex) {
+                                final isSel = _selectedNewCatColor == hex;
+                                final color = Color(int.parse(hex.replaceFirst('#', '0xFF')));
+                                return GestureDetector(
+                                  onTap: () => setState(() => _selectedNewCatColor = hex),
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    margin: const EdgeInsets.only(right: 10),
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                      border: isSel
+                                          ? Border.all(color: AppColors.gray800, width: 2)
+                                          : null,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: color.withOpacity(0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        )
+                                      ],
+                                    ),
+                                    child: isSel
+                                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                                        : null,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 18),
+                            
+                            // Buttons
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isCategoryFormExpanded = false;
+                                      _newCatNameCtrl.clear();
+                                    });
+                                  },
+                                  child: const Text(
+                                    'Batal',
+                                    style: TextStyle(color: AppColors.gray500),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: _isCreatingCategory ? null : _handleCreateCategory,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.emerald500,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(120, 40),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: _isCreatingCategory
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Simpan & Terapkan',
+                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
 

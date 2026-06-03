@@ -64,7 +64,7 @@ exports.createTransaction = async (req, res) => {
     );
 
     const [[tx]] = await pool.query(
-      `SELECT t.*, c.name AS category_name, c.color AS category_color
+      `SELECT t.*, c.name AS category_name, c.color AS category_color, c.icon AS category_icon
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.category_id
        WHERE t.transaction_id = ?`,
@@ -109,7 +109,7 @@ exports.updateTransaction = async (req, res) => {
     );
 
     const [[updated]] = await pool.query(
-      `SELECT t.*, c.name AS category_name, c.color AS category_color
+      `SELECT t.*, c.name AS category_name, c.color AS category_color, c.icon AS category_icon
        FROM transactions t LEFT JOIN categories c ON t.category_id = c.category_id
        WHERE t.transaction_id = ?`, [id]
     );

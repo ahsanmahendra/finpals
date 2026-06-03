@@ -57,10 +57,12 @@ CREATE TABLE IF NOT EXISTS otps (
 -- ── Categories ────────────────────────────
 CREATE TABLE IF NOT EXISTS categories (
   category_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT DEFAULT NULL,
   name        VARCHAR(50)  NOT NULL,
   icon        VARCHAR(50),
   color       VARCHAR(20),
-  is_default  BOOLEAN DEFAULT TRUE
+  is_default  BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ── Transactions ──────────────────────────

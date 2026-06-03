@@ -110,7 +110,10 @@ exports.changePassword = async (req, res) => {
 // ════════════════════════════════════════
 exports.getCategories = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM categories ORDER BY category_id');
+    const [rows] = await pool.query(
+      'SELECT * FROM categories WHERE user_id IS NULL OR user_id = ? ORDER BY category_id',
+      [req.user.userId]
+    );
     res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ error: 'Gagal mengambil kategori' });
@@ -122,14 +125,15 @@ exports.createCategory = async (req, res) => {
   if (!name) return res.status(400).json({ error: 'Nama kategori wajib diisi' });
   try {
     const [result] = await pool.query(
-      'INSERT INTO categories (name, icon, color, is_default) VALUES (?, ?, ?, FALSE)',
-      [name.trim(), icon || 'more_horiz', color || '#6b7280']
+      'INSERT INTO categories (user_id, name, icon, color, is_default) VALUES (?, ?, ?, ?, FALSE)',
+      [req.user.userId, name.trim(), icon || 'more_horiz', color || '#6b7280']
     );
     const [[cat]] = await pool.query(
       'SELECT * FROM categories WHERE category_id = ?', [result.insertId]
     );
     res.status(201).json({ data: cat });
   } catch (err) {
+    console.error('createCategory error:', err);
     res.status(500).json({ error: 'Gagal membuat kategori' });
   }
 };
@@ -137,8 +141,8 @@ exports.createCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     await pool.query(
-      'DELETE FROM categories WHERE category_id = ? AND is_default = FALSE',
-      [req.params.id]
+      'DELETE FROM categories WHERE category_id = ? AND is_default = FALSE AND user_id = ?',
+      [req.params.id, req.user.userId]
     );
     res.json({ message: 'Kategori dihapus' });
   } catch (err) {
